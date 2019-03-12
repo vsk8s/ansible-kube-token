@@ -1,0 +1,12 @@
+---
+kube_token_kubeconfig: "~/.kube/config"
+kube_token_state: "present"
+
+#kube_token_name:
+#kube_token_namespace:
+#kube_token_path
+#kube_token_ca_path
+#kube_token_ca_fallback
+kube_token_owner: root
+kube_token_group: root
+kube_token_mode: 0640

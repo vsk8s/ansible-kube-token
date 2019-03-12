@@ -1,0 +1,68 @@
+---
+- name: Create service account
+  local_action:
+    module:  k8s
+    state: "{{ kube_token_state }}"
+    kubeconfig: "{{ kube_token_kubeconfig }}"
+    definition:
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: "{{ kube_token_name }}"
+        namespace: "{{ kube_token_namespace }}"
+  register: servicecreate
+
+- name: Give controller-manager some time to populate the secret
+  when: servicecreate is changed
+  pause:
+    seconds: 3
+
+- name: Load service account token
+  when: kube_token_state == "present"
+  local_action:
+    module:  k8s_facts
+    kubeconfig: "{{ kube_token_kubeconfig }}"
+    api_version: v1
+    kind: ServiceAccount
+    name: "{{ kube_token_name }}"
+    namespace: "{{ kube_token_namespace }}"
+  register: token
+
+- name: Load service account token secret
+  when: kube_token_state == "present"
+  local_action:
+    module:  k8s_facts
+    kubeconfig: "{{ kube_token_kubeconfig }}"
+    api_version: v1
+    kind: Secret
+    name: "{{ token.resources[0].secrets[0].name }}"
+    namespace: "{{ kube_token_namespace }}"
+  register: secret
+
+- name: Store service account token secret
+  when: kube_token_state == "present"
+  copy:
+    dest: "{{ kube_token_path }}"
+    owner: "{{ kube_token_owner }}"
+    group: "{{ kube_token_group }}"
+    mode: "{{ kube_token_mode }}"
+    content: "{{ secret.resources[0].data.token | b64decode }}"
+  no_log: True
+
+- name: Store service account token ca cert
+  when: kube_token_state == "present" and 'ca.crt' in secret.resources[0].data
+  copy:
+    dest: "{{ kube_token_ca_path }}"
+    owner: "{{ kube_token_owner }}"
+    group: "{{ kube_token_group }}"
+    mode: "{{ kube_token_mode }}"
+    content: "{{ secret.resources[0].data['ca.crt'] | b64decode }}"
+
+- name: Store service account token ca cert
+  when: kube_token_state == "present" and not ('ca.crt' in secret.resources[0].data)
+  copy:
+    dest: "{{ kube_token_ca_path }}"
+    owner: "{{ kube_token_owner }}"
+    group: "{{ kube_token_group }}"
+    mode: "{{ kube_token_mode }}"
+    content: "{{ kube_token_ca_fallback | b64decode }}"
