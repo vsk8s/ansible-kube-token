@@ -49,7 +49,7 @@
     content: "{{ secret.resources[0].data.token | b64decode }}"
   no_log: True
 
-- name: Store service account token ca cert
+- name: Store service account token ca cert if present
   when: kube_token_state == "present" and 'ca.crt' in secret.resources[0].data
   copy:
     dest: "{{ kube_token_ca_path }}"
@@ -57,12 +57,3 @@
     group: "{{ kube_token_group }}"
     mode: "{{ kube_token_mode }}"
     content: "{{ secret.resources[0].data['ca.crt'] | b64decode }}"
-
-- name: Store service account token ca cert
-  when: kube_token_state == "present" and not ('ca.crt' in secret.resources[0].data)
-  copy:
-    dest: "{{ kube_token_ca_path }}"
-    owner: "{{ kube_token_owner }}"
-    group: "{{ kube_token_group }}"
-    mode: "{{ kube_token_mode }}"
-    content: "{{ kube_token_ca_fallback | b64decode }}"
