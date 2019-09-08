@@ -40,6 +40,7 @@
   register: secret
 
 - name: Store service account token secret
+  become: True
   when: kube_token_state == "present"
   copy:
     dest: "{{ kube_token_path }}"
@@ -50,6 +51,7 @@
   no_log: True
 
 - name: Store service account token ca cert if present
+  become: True
   when: kube_token_state == "present" and 'ca.crt' in secret.resources[0].data
   copy:
     dest: "{{ kube_token_ca_path }}"
