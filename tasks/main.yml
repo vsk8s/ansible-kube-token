@@ -1,7 +1,7 @@
 ---
 - name: Create service account
   local_action:
-    module:  k8s
+    module: kubernetes.core.k8s
     state: "{{ kube_token_state }}"
     kubeconfig: "{{ kube_token_kubeconfig }}"
     definition:
@@ -20,7 +20,7 @@
 - name: Load service account token
   when: kube_token_state == "present"
   local_action:
-    module:  k8s_facts
+    module: kubernetes.core.k8s_info
     kubeconfig: "{{ kube_token_kubeconfig }}"
     api_version: v1
     kind: ServiceAccount
@@ -31,7 +31,7 @@
 - name: Load service account token secret
   when: kube_token_state == "present"
   local_action:
-    module:  k8s_facts
+    module: kubernetes.core.k8s_info
     kubeconfig: "{{ kube_token_kubeconfig }}"
     api_version: v1
     kind: Secret
